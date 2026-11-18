@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CEE Centres Survey</title>
+<style>
+  /* University of Strathclyde brand palette (strath.ac.uk/branding):
+     Pantone 289 navy #002b5c, Pantone 877 grey #a7a9ac,
+     Faculty of Engineering Pantone 307 #0078ae, web call-to-action #018489 */
+  :root {
+    color-scheme: light;
+    --navy: #002b5c;
+    --grey: #a7a9ac;
+    --eng: #0078ae;
+    --cta: #018489;
+    --bg: #f2f3f4;
+    --card: #ffffff;
+    --ink: #002b5c;
+    --body: #222222;
+    --muted: #55595e;
+    --line: #d3d4d6;
+    --focus: #018489;
+    --wesph: #0078ae;
+    --ii: #002b5c;
+    --cgeeg: #a7a9ac;
+    --danger: #b3261e;
+    --ok: #018489;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--body);
+    font: 16px/1.5 Arial, Helvetica, sans-serif;
+  }
+  h1, h2 { color: var(--ink); }
+  .brandbar { background: var(--navy); }
+  /* Exclusion zone: at least half the shield's height (~33px at this size) */
+  .brandbar .inner { max-width: 760px; margin: 0 auto; padding: 34px 34px 26px; }
+  @media (max-width: 520px) { .brandbar .inner { padding: 24px 16px 20px; } .brandbar img { width: 150px; } }
+  .brandbar img { display: block; width: 210px; max-width: 60%; height: auto; }
+  .brandbar .dept { color: #fff; font-size: 15px; margin: 18px 0 0; }
+  main { max-width: 760px; margin: 0 auto; padding: 28px 16px 64px; }
+  h1 { margin: 0 0 8px; font-size: clamp(24px, 4vw, 30px); line-height: 1.2; font-weight: 700; }
+  header p.lede { margin: 0 0 24px; color: var(--muted); }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 24px; margin-bottom: 16px;
+  }
+  .card h2 { margin: 0 0 4px; font-size: 18px; }
+  .card h2 .step { color: var(--muted); font-weight: 500; margin-right: 6px; }
+  .card p.hint { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+
+  /* Venn */
+  .venn-wrap { position: relative; }
+  svg.venn { display: block; width: 100%; height: auto; max-width: 560px; margin: 0 auto; cursor: pointer; touch-action: manipulation; user-select: none; }
+  svg.venn .base { fill-opacity: .12; }
+  svg.venn .base[data-key="cgeeg"] { fill-opacity: .25; }
+  svg.venn .outline { fill: none; stroke-width: 3; pointer-events: none; }
+  svg.venn .region { pointer-events: none; transition: fill-opacity .12s; }
+  svg.venn text { pointer-events: none; fill: var(--ink); font-family: inherit; }
+  svg.venn text.abbr { font-weight: 700; font-size: 18px; }
+  svg.venn text.full { font-size: 12.5px; fill: var(--muted); }
+  .readout {
+    min-height: 1.5em; text-align: center; margin: 8px 0 16px; font-weight: 600;
+  }
+  .readout.empty { color: var(--muted); font-weight: 400; }
+
+  /* Checkbox list */
+  .choices { display: grid; gap: 8px; }
+  .choice {
+    display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px;
+    border: 1px solid var(--line); border-radius: 8px; cursor: pointer;
+  }
+  .choice:hover { border-color: var(--muted); }
+  .choice input { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--focus); flex: none; }
+  .choice .dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 6px; flex: none; }
+  .choice .name { font-weight: 600; }
+  .choice .sub { display: block; font-size: 13px; color: var(--muted); font-weight: 400; }
+  .choice.none { border-style: dashed; }
+
+  /* Ranking */
+  ol.rank { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
+  ol.rank li {
+    display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--card);
+  }
+  ol.rank .pos { font-weight: 700; width: 92px; flex: none; font-size: 14px; }
+  ol.rank .label { flex: 1; min-width: 0; }
+  ol.rank .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+  ol.rank .btns { display: flex; gap: 4px; flex: none; }
+  ol.rank button {
+    width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 6px;
+    background: transparent; color: var(--ink); font-size: 12px; cursor: pointer;
+  }
+  ol.rank button:disabled { opacity: .3; cursor: default; }
+  ol.rank.dimmed { opacity: .4; }
+  label.inline { display: flex; gap: 10px; align-items: center; font-size: 15px; cursor: pointer; }
+  label.inline input { width: 18px; height: 18px; accent-color: var(--focus); }
+
+  /* Fields */
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 15px; }
+  .field .opt { color: var(--muted); font-weight: 400; }
+  input[type=text], input[type=email], textarea {
+    width: 100%; padding: 10px 12px; font: inherit; color: var(--ink);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  }
+  textarea { min-height: 84px; resize: vertical; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .submit-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  button.primary {
+    background: var(--cta); color: #fff; border: 0; border-radius: 8px;
+    padding: 12px 24px; font: inherit; font-weight: 600; cursor: pointer;
+  }
+  button.primary:disabled { opacity: .5; cursor: not-allowed; }
+  .msg { font-size: 14px; }
+  .msg.err { color: var(--danger); }
+  .hidden { display: none !important; }
+
+  .thanks { text-align: center; padding: 40px 24px; }
+  .thanks .tick { font-size: 40px; color: var(--ok); line-height: 1; }
+  .thanks dl { display: inline-grid; grid-template-columns: auto auto; gap: 4px 16px; text-align: left; margin: 16px auto 0; }
+  .thanks dt { color: var(--muted); }
+  .thanks dd { margin: 0; font-weight: 600; }
+  .notice { background: var(--bg); border: 1px dashed var(--line); padding: 10px 12px; border-radius: 8px; font-size: 14px; color: var(--muted); margin-bottom: 16px; }
+
+  @media (max-width: 520px) {
+    .card { padding: 18px 16px; }
+    ol.rank .pos { width: 70px; }
+  }
+</style>
+</head>
+<body>
+<div class="brandbar">
+  <div class="inner">
+    <img src="data:image/png;base64,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" alt="University of Strathclyde Glasgow">
+    <p class="dept">Department of Civil &amp; Environmental Engineering</p>
+  </div>
+</div>
+<main>
+  <header>
+    <h1>Which centre(s) do you belong to?</h1>
+    <p class="lede">Click the part of the diagram that best describes your work. If your work spans more than one centre, click an overlap. It takes about a minute.</p>
+  </header>
+
+  <div id="already" class="notice hidden">You've already responded from this browser. If you submit again, your new response will be added too and the latest one will be used.</div>
+
+  <form id="survey" novalidate>
+    <section class="card">
+      <h2><span class="step">1</span>Where does your work sit?</h2>
+      <p class="hint">Click a region of the diagram, or tick the boxes below. You can tick more than one.</p>
+      <div class="venn-wrap">
+        <svg class="venn" id="venn" viewBox="40 30 520 500" role="img" aria-label="Venn diagram of the three centres. Use the tick boxes below to make your choice."></svg>
+      </div>
+      <div class="readout empty" id="readout" aria-live="polite">Nothing selected yet</div>
+      <div class="choices" id="choices"></div>
+    </section>
+
+    <section class="card hidden" id="rankCard">
+      <h2><span class="step">2</span>Which is your main centre?</h2>
+      <p class="hint">Put them in order, with the centre that best fits your work first. Use the arrows to move them.</p>
+      <ol class="rank" id="rankList"></ol>
+      <label class="inline"><input type="checkbox" id="equal"> They're equally important to me, so I'd rather not rank them</label>
+    </section>
+
+    <section class="card">
+      <h2><span class="step" id="aboutStep">2</span>About you</h2>
+      <div class="field">
+        <label for="name">Your name</label>
+        <input type="text" id="name" autocomplete="name" required>
+      </div>
+      <div class="field">
+        <label for="email">Strathclyde email <span class="opt">(optional)</span></label>
+        <input type="email" id="email" autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="comments">Anything else? <span class="opt">(optional)</span></label>
+        <textarea id="comments" placeholder="For example, a research theme that doesn't fit neatly into any centre"></textarea>
+      </div>
+      <div class="submit-row">
+        <button type="submit" class="primary" id="submitBtn">Submit</button>
+        <span class="msg" id="msg" role="status"></span>
+      </div>
+    </section>
+  </form>
+
+  <section class="card thanks hidden" id="thanks" aria-live="polite">
+    <div class="tick">&#10003;</div>
+    <h2>Thank you, your response has been recorded</h2>
+    <p class="hint" id="demoNote"></p>
+    <dl id="summary"></dl>
+  </section>
+</main>
+
+<script>
+/* =====================================================================
+   CONFIGURATION: edit these values before you publish the page
+   ===================================================================== */
+const CONFIG = {
+  // Option A (recommended): paste the HTTP POST URL from your Power Automate
+  // flow ("When an HTTP request is received"). Each response becomes a new row in
+  // the Excel table in your OneDrive.
+  FLOW_URL: "",
+
+  // Option B (no Premium licence): a Microsoft Forms pre-filled link, with each
+  // answer replaced by a placeholder. See SETUP.md.
+  // Placeholders: {name} {email} {combination} {primary} {secondary} {tertiary} {equal} {comments}
+  FORMS_PREFILL_URL: "",
+
+  // Shown if a submission fails, e.g. "j.bloggs@strath.ac.uk"
+  CONTACT_EMAIL: ""
+};
+/* ===================================================================== */
+
+const CENTRES = [
+  { key: "wesph", bit: 1, abbr: "WESPH", name: "Water, Environment, Sustainability and Public Health",
+    lines: ["Water, Environment,", "Sustainability &", "Public Health"], cx: 228, cy: 215, lx: 140, ly: 150 },
+  { key: "ii", bit: 2, abbr: "II", name: "Intelligent Infrastructure",
+    lines: ["Intelligent", "Infrastructure"], cx: 372, cy: 215, lx: 460, ly: 160 },
+  { key: "cgeeg", bit: 4, abbr: "CGEEG", name: "Centre for Ground Engineering & Energy Geosciences",
+    lines: ["Ground Engineering &", "Energy Geosciences"], cx: 300, cy: 340, lx: 300, ly: 440 }
+];
+const R = 165;
+const SVGNS = "http://www.w3.org/2000/svg";
+const ORDINALS = ["1st (primary)", "2nd", "3rd"];
+
+const state = { selected: new Set(), none: false, order: [], equal: false, hover: 0, submitting: false };
+
+const $ = (id) => document.getElementById(id);
+const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const colorOf = (c) => cssVar("--" + c.key);
+const codeOf = (set) => CENTRES.reduce((n, c) => n + (set.has(c.key) ? c.bit : 0), 0);
+const centresOf = (code) => CENTRES.filter((c) => code & c.bit);
+
+/* ---------- Venn diagram ---------- */
+function el(tag, attrs, parent) {
+  const n = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+
+const regionEls = {};
+function buildVenn() {
+  const svg = $("venn");
+  const defs = el("defs", {}, svg);
+  CENTRES.forEach((c) => {
+    const cp = el("clipPath", { id: "clip-" + c.key }, defs);
+    el("circle", { cx: c.cx, cy: c.cy, r: R }, cp);
+    const m = el("mask", { id: "not-" + c.key, maskUnits: "userSpaceOnUse", x: 0, y: 0, width: 600, height: 600 }, defs);
+    el("rect", { x: 0, y: 0, width: 600, height: 600, fill: "white" }, m);
+    el("circle", { cx: c.cx, cy: c.cy, r: R, fill: "black" }, m);
+  });
+
+  const bases = el("g", {}, svg);
+  CENTRES.forEach((c) => el("circle", { class: "base", cx: c.cx, cy: c.cy, r: R, "data-key": c.key }, bases));
+
+  // One drawable shape per region (codes 1-7): the first member's circle,
+  // clipped to the other members and masked to remove the non-members.
+  const regions = el("g", {}, svg);
+  for (let code = 1; code <= 7; code++) {
+    const members = centresOf(code);
+    const non = CENTRES.filter((c) => !(code & c.bit));
+    let outer = el("g", {}, regions);
+    let cur = outer;
+    non.forEach((c) => { cur = el("g", { mask: `url(#not-${c.key})` }, cur); });
+    members.slice(1).forEach((c) => { cur = el("g", { "clip-path": `url(#clip-${c.key})` }, cur); });
+    const m0 = members[0];
+    regionEls[code] = el("circle", { class: "region", cx: m0.cx, cy: m0.cy, r: R, "fill-opacity": 0 }, cur);
+  }
+
+  const outlines = el("g", {}, svg);
+  CENTRES.forEach((c) => el("circle", { class: "outline", cx: c.cx, cy: c.cy, r: R, "data-key": c.key }, outlines));
+
+  const labels = el("g", {}, svg);
+  CENTRES.forEach((c) => {
+    el("text", { class: "abbr", x: c.lx, y: c.ly, "text-anchor": "middle" }, labels).textContent = c.abbr;
+    c.lines.forEach((ln, i) => {
+      el("text", { class: "full", x: c.lx, y: c.ly + 20 + i * 15, "text-anchor": "middle" }, labels).textContent = ln;
+    });
+  });
+
+  const toSvg = (evt) => {
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  };
+  const hit = (p) => CENTRES.reduce((n, c) => n + (Math.hypot(p.x - c.cx, p.y - c.cy) <= R ? c.bit : 0), 0);
+
+  svg.addEventListener("pointermove", (e) => {
+    const h = hit(toSvg(e));
+    if (h !== state.hover) { state.hover = h; paintVenn(); }
+  });
+  svg.addEventListener("pointerleave", () => { state.hover = 0; paintVenn(); });
+  svg.addEventListener("click", (e) => {
+    const code = hit(toSvg(e));
+    if (!code) return;
+    const current = codeOf(state.selected);
+    state.selected = new Set(code === current ? [] : centresOf(code).map((c) => c.key));
+    state.none = false;
+    syncOrder(); render();
+  });
+}
+
+function paintVenn() {
+  const sel = codeOf(state.selected);
+  document.querySelectorAll("svg.venn .base").forEach((n) => n.setAttribute("fill", colorOf(CENTRES.find((c) => c.key === n.dataset.key))));
+  document.querySelectorAll("svg.venn .outline").forEach((n) => n.setAttribute("stroke", colorOf(CENTRES.find((c) => c.key === n.dataset.key))));
+  for (let code = 1; code <= 7; code++) {
+    const r = regionEls[code];
+    // Brand rule: no blended colours, so the selection uses the web call-to-action colour
+    r.setAttribute("fill", cssVar("--cta"));
+    r.setAttribute("fill-opacity", code === sel ? 0.5 : code === state.hover ? 0.18 : 0);
+  }
+}
+
+/* ---------- Checkboxes ---------- */
+function buildChoices() {
+  const box = $("choices");
+  CENTRES.forEach((c) => {
+    const lab = document.createElement("label");
+    lab.className = "choice";
+    lab.innerHTML = `<input type="checkbox" value="${c.key}"><span class="dot" style="background:var(--${c.key})"></span>
+      <span class="name">${c.abbr}<span class="sub">${c.name}</span></span>`;
+    lab.querySelector("input").addEventListener("change", (e) => {
+      e.target.checked ? state.selected.add(c.key) : state.selected.delete(c.key);
+      if (e.target.checked) state.none = false;
+      syncOrder(); render();
+    });
+    box.appendChild(lab);
+  });
+  const none = document.createElement("label");
+  none.className = "choice none";
+  none.innerHTML = `<input type="checkbox" id="noneBox"><span class="name">None of these, or I'm not sure<span class="sub">Tell us more in the comments box below</span></span>`;
+  none.querySelector("input").addEventListener("change", (e) => {
+    state.none = e.target.checked;
+    if (state.none) state.selected.clear();
+    syncOrder(); render();
+  });
+  box.appendChild(none);
+}
+
+/* ---------- Ranking ---------- */
+function syncOrder() {
+  state.order = state.order.filter((k) => state.selected.has(k));
+  CENTRES.forEach((c) => { if (state.selected.has(c.key) && !state.order.includes(c.key)) state.order.push(c.key); });
+}
+
+function renderRank() {
+  const multi = state.selected.size >= 2;
+  $("rankCard").classList.toggle("hidden", !multi);
+  $("aboutStep").textContent = multi ? "3" : "2";
+  const list = $("rankList");
+  list.classList.toggle("dimmed", state.equal);
+  list.innerHTML = "";
+  if (!multi) return;
+  state.order.forEach((key, i) => {
+    const c = CENTRES.find((x) => x.key === key);
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="pos">${state.equal ? "Equal" : ORDINALS[i]}</span>
+      <span class="dot" style="background:var(--${c.key})"></span>
+      <span class="label"><strong>${c.abbr}</strong>: ${c.name}</span>
+      <span class="btns">
+        <button type="button" aria-label="Move ${c.abbr} up" ${i === 0 || state.equal ? "disabled" : ""}>&#9650;&#xFE0E;</button>
+        <button type="button" aria-label="Move ${c.abbr} down" ${i === state.order.length - 1 || state.equal ? "disabled" : ""}>&#9660;&#xFE0E;</button>
+      </span>`;
+    const [up, down] = li.querySelectorAll("button");
+    up.addEventListener("click", () => move(i, -1, up));
+    down.addEventListener("click", () => move(i, 1, down));
+    list.appendChild(li);
+  });
+}
+function move(i, dir) {
+  const j = i + dir;
+  [state.order[i], state.order[j]] = [state.order[j], state.order[i]];
+  renderRank();
+  // keep keyboard focus on the moved item
+  const btns = $("rankList").children[j].querySelectorAll("button");
+  const target = dir < 0 ? btns[0] : btns[1];
+  (target.disabled ? btns[dir < 0 ? 1 : 0] : target).focus();
+}
+
+/* ---------- Render ---------- */
+function combinationLabel() {
+  if (state.none) return "None of these / not sure";
+  if (!state.selected.size) return "";
+  const cs = CENTRES.filter((c) => state.selected.has(c.key)).map((c) => c.abbr);
+  return cs.length === 1 ? cs[0] + " only" : cs.join(" + ");
+}
+function render() {
+  document.querySelectorAll('#choices input[value]').forEach((i) => { i.checked = state.selected.has(i.value); });
+  $("noneBox").checked = state.none;
+  const lbl = combinationLabel();
+  const ro = $("readout");
+  ro.textContent = lbl ? "You selected: " + lbl : "Nothing selected yet";
+  ro.classList.toggle("empty", !lbl);
+  paintVenn();
+  renderRank();
+}
+
+$("equal").addEventListener("change", (e) => { state.equal = e.target.checked; renderRank(); });
+
+/* ---------- Submit ---------- */
+function payload() {
+  const multi = state.selected.size >= 2;
+  const ranked = multi && !state.equal ? state.order : state.selected.size === 1 ? [...state.selected] : [];
+  const nameOf = (k) => (k ? CENTRES.find((c) => c.key === k).name : "");
+  return {
+    submittedAtClient: new Date().toISOString(),
+    name: $("name").value.trim(),
+    email: $("email").value.trim(),
+    combination: combinationLabel(),
+    inWESPH: state.selected.has("wesph") ? "Yes" : "No",
+    inII: state.selected.has("ii") ? "Yes" : "No",
+    inCGEEG: state.selected.has("cgeeg") ? "Yes" : "No",
+    primary: nameOf(ranked[0]),
+    secondary: nameOf(ranked[1]),
+    tertiary: nameOf(ranked[2]),
+    equalWeighting: multi && state.equal ? "Yes" : "No",
+    noneOfThese: state.none ? "Yes" : "No",
+    comments: $("comments").value.trim()
+  };
+}
+
+function showThanks(p, demo) {
+  $("survey").classList.add("hidden");
+  $("already").classList.add("hidden");
+  $("thanks").classList.remove("hidden");
+  $("demoNote").textContent = demo ? "Demo mode: nothing was saved because no FLOW_URL is set in the page's CONFIG." : "";
+  const rows = [["Selection", p.combination], ["Primary", p.primary], ["Secondary", p.secondary], ["Third", p.tertiary]];
+  if (p.equalWeighting === "Yes") rows.push(["Ranking", "Equal weighting"]);
+  $("summary").innerHTML = rows.filter((r) => r[1]).map((r) => `<dt>${r[0]}</dt><dd></dd>`).join("");
+  $("summary").querySelectorAll("dd").forEach((dd, i) => { dd.textContent = rows.filter((r) => r[1])[i][1]; });
+  try { localStorage.setItem("cee-centres-responded", "1"); } catch (_) {}
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+$("survey").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (state.submitting) return;
+  const msg = $("msg");
+  msg.className = "msg err";
+  if (!state.selected.size && !state.none) { msg.textContent = "Please choose at least one centre, or tick 'None of these'."; return; }
+  if (!$("name").value.trim()) { msg.textContent = "Please enter your name."; $("name").focus(); return; }
+  msg.className = "msg"; msg.textContent = "Sending…";
+  const p = payload();
+
+  if (CONFIG.FORMS_PREFILL_URL && !CONFIG.FLOW_URL) {
+    const map = { name: p.name, email: p.email, combination: p.combination, primary: p.primary, secondary: p.secondary,
+      tertiary: p.tertiary, equal: p.equalWeighting, comments: p.comments };
+    window.location.href = CONFIG.FORMS_PREFILL_URL.replace(/(?:\{|%7B)(\w+)(?:\}|%7D)/gi, (_, k) => encodeURIComponent(map[k.toLowerCase()] ?? ""));
+    return;
+  }
+  if (!CONFIG.FLOW_URL) { console.log("Survey payload (demo mode):", p); showThanks(p, true); return; }
+
+  state.submitting = true; $("submitBtn").disabled = true;
+  try {
+    // text/plain keeps this a "simple" request, so the browser sends no CORS preflight.
+    const res = await fetch(CONFIG.FLOW_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      body: JSON.stringify(p)
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    showThanks(p, false);
+  } catch (err) {
+    console.error(err);
+    msg.className = "msg err";
+    msg.textContent = "Sorry, your response could not be saved. Please try again" +
+      (CONFIG.CONTACT_EMAIL ? ", or email " + CONFIG.CONTACT_EMAIL + "." : ".");
+  } finally {
+    state.submitting = false; $("submitBtn").disabled = false;
+  }
+});
+
+/* ---------- Init ---------- */
+buildVenn();
+buildChoices();
+// Pre-select from the email link, e.g. survey.html?c=wesph,ii
+const pre = new URLSearchParams(location.search).get("c");
+if (pre) pre.split(",").map((s) => s.trim().toLowerCase()).forEach((k) => { if (CENTRES.some((c) => c.key === k)) state.selected.add(k); });
+syncOrder();
+render();
+try { if (localStorage.getItem("cee-centres-responded")) $("already").classList.remove("hidden"); } catch (_) {}
+</script>
+</body>
+</html>

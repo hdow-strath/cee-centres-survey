@@ -1,0 +1,6 @@
+# Publish ONLY the survey page. Everything else in this folder (the responses
+# spreadsheet, setup notes, logo files) stays private on OneDrive.
+*
+!.gitignore
+!README.md
+!survey.html
