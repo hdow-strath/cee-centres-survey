@@ -101,6 +101,10 @@
   .field { margin-bottom: 14px; }
   .field label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 15px; }
   .field .opt { color: var(--muted); font-weight: 400; }
+  .field .req { color: var(--danger); font-weight: 700; }
+  .field-err { display: block; color: var(--danger); font-size: 14px; margin-top: 4px; }
+  .field-err:empty { display: none; }
+  input[aria-invalid="true"] { border-color: var(--danger); }
   input[type=text], input[type=email], textarea {
     width: 100%; padding: 10px 12px; font: inherit; color: var(--ink);
     background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
@@ -140,8 +144,8 @@
 </div>
 <main>
   <header>
-    <h1>Which centre(s) do you belong to?</h1>
-    <p class="lede">Click the part of the diagram that best describes your work. If your work spans more than one centre, click an overlap. It takes about a minute.</p>
+    <h1>Which centre(s) does your expertise belong to?</h1>
+    <p class="lede">Click the part of the diagram that best describes your work. If your work spans more than one centre, click an overlap.</p>
   </header>
 
   <div id="already" class="notice hidden">You've already responded from this browser. If you submit again, your new response will be added too and the latest one will be used.</div>
@@ -167,12 +171,14 @@
     <section class="card">
       <h2><span class="step" id="aboutStep">2</span>About you</h2>
       <div class="field">
-        <label for="name">Your name</label>
-        <input type="text" id="name" autocomplete="name" required>
+        <label for="name">Your name <span class="req" aria-hidden="true">*</span></label>
+        <input type="text" id="name" autocomplete="name" required aria-required="true">
       </div>
       <div class="field">
-        <label for="email">Strathclyde email <span class="opt">(optional)</span></label>
-        <input type="email" id="email" autocomplete="email">
+        <label for="email">Strathclyde email <span class="req" aria-hidden="true">*</span></label>
+        <input type="email" id="email" autocomplete="email" required aria-required="true"
+               placeholder="firstname.surname@strath.ac.uk" aria-describedby="emailErr">
+        <span class="field-err" id="emailErr"></span>
       </div>
       <div class="field">
         <label for="comments">Anything else? <span class="opt">(optional)</span></label>
@@ -201,7 +207,7 @@ const CONFIG = {
   // Option A (recommended): paste the HTTP POST URL from your Power Automate
   // flow ("When an HTTP request is received"). Each response becomes a new row in
   // the Excel table in your OneDrive.
-  FLOW_URL: "",
+  FLOW_URL: "https://default631e0763153347eba5cd0457bee594.4e.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/20/workflows/2816e64d06614de7a56feec94b0258d6/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=MEAyEoGcYjplpo9Vm_6NhGQxqIcFDcTVdaYaOft-wag",
 
   // Option B (no Premium licence): a Microsoft Forms pre-filled link, with each
   // answer replaced by a placeholder. See SETUP.md.
@@ -214,11 +220,11 @@ const CONFIG = {
 /* ===================================================================== */
 
 const CENTRES = [
-  { key: "wesph", bit: 1, abbr: "WESPH", name: "Water, Environment, Sustainability and Public Health",
+  { key: "wesph", bit: 1, abbr: "WESP", name: "Water, Environment, Sustainability and Public Health",
     lines: ["Water, Environment,", "Sustainability &", "Public Health"], cx: 228, cy: 215, lx: 140, ly: 150 },
   { key: "ii", bit: 2, abbr: "II", name: "Intelligent Infrastructure",
     lines: ["Intelligent", "Infrastructure"], cx: 372, cy: 215, lx: 460, ly: 160 },
-  { key: "cgeeg", bit: 4, abbr: "CGEEG", name: "Centre for Ground Engineering & Energy Geosciences",
+  { key: "cgeeg", bit: 4, abbr: "GEEG", name: "Centre for Ground Engineering & Energy Geosciences",
     lines: ["Ground Engineering &", "Energy Geosciences"], cx: 300, cy: 340, lx: 300, ly: 440 }
 ];
 const R = 165;
@@ -409,7 +415,7 @@ function payload() {
   return {
     submittedAtClient: new Date().toISOString(),
     name: $("name").value.trim(),
-    email: $("email").value.trim(),
+    email: $("email").value.trim().toLowerCase(),
     combination: combinationLabel(),
     inWESPH: state.selected.has("wesph") ? "Yes" : "No",
     inII: state.selected.has("ii") ? "Yes" : "No",
@@ -443,6 +449,7 @@ $("survey").addEventListener("submit", async (e) => {
   msg.className = "msg err";
   if (!state.selected.size && !state.none) { msg.textContent = "Please choose at least one centre, or tick 'None of these'."; return; }
   if (!$("name").value.trim()) { msg.textContent = "Please enter your name."; $("name").focus(); return; }
+  if (!checkEmail(true)) { msg.textContent = "Please enter your Strathclyde email address."; $("email").focus(); return; }
   msg.className = "msg"; msg.textContent = "Sending…";
   const p = payload();
 
@@ -477,7 +484,21 @@ $("survey").addEventListener("submit", async (e) => {
 /* ---------- Init ---------- */
 buildVenn();
 buildChoices();
-// Pre-select from the email link, e.g. survey.html?c=wesph,ii
+// Strathclyde addresses: @strath.ac.uk, or a subdomain such as @uni.strath.ac.uk
+const STRATH_EMAIL = /^[^\s@]+@([a-z0-9-]+\.)*strath\.ac\.uk$/i;
+function checkEmail(showEmpty) {
+  const v = $("email").value.trim();
+  let err = "";
+  if (!v) err = showEmpty ? "Your Strathclyde email is required." : "";
+  else if (!STRATH_EMAIL.test(v)) err = "Please use your Strathclyde address, ending in @strath.ac.uk.";
+  $("emailErr").textContent = err;
+  $("email").setAttribute("aria-invalid", err ? "true" : "false");
+  return !!v && !err;
+}
+$("email").addEventListener("blur", () => checkEmail(false));
+$("email").addEventListener("input", () => { if ($("email").getAttribute("aria-invalid") === "true") checkEmail(false); });
+
+// Pre-select from a link, e.g. survey.html?c=wesph,ii
 const pre = new URLSearchParams(location.search).get("c");
 if (pre) pre.split(",").map((s) => s.trim().toLowerCase()).forEach((k) => { if (CENTRES.some((c) => c.key === k)) state.selected.add(k); });
 syncOrder();
