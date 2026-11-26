@@ -23,7 +23,7 @@
     --focus: #018489;
     --wesph: #0078ae;
     --ii: #002b5c;
-    --cgeeg: #a7a9ac;
+    --geg: #a7a9ac;
     --danger: #b3261e;
     --ok: #018489;
   }
@@ -54,7 +54,17 @@
   .venn-wrap { position: relative; }
   svg.venn { display: block; width: 100%; height: auto; max-width: 560px; margin: 0 auto; cursor: pointer; touch-action: manipulation; user-select: none; }
   svg.venn .base { fill-opacity: .12; }
-  svg.venn .base[data-key="cgeeg"] { fill-opacity: .25; }
+  svg.venn .base[data-key="geg"] { fill-opacity: .25; }
+  .venn-lock {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-weight: 600; color: var(--ink); background: rgba(255,255,255,.6); border-radius: 8px;
+  }
+  .locked svg.venn { cursor: default; opacity: .45; }
+  .locked .choices { opacity: .5; }
+  .card .note { margin: 14px 0 0; font-size: 14px; color: var(--muted); }
+  .card .note a { color: var(--cta); font-weight: 600; }
+  .card .note ul.heads { margin: 6px 0 0; padding-left: 20px; }
+  .card .note ul.heads li { margin: 2px 0; }
   svg.venn .outline { fill: none; stroke-width: 3; pointer-events: none; }
   svg.venn .region { pointer-events: none; transition: fill-opacity .12s; }
   svg.venn text { pointer-events: none; fill: var(--ink); font-family: inherit; }
@@ -76,26 +86,14 @@
   .choice .dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 6px; flex: none; }
   .choice .name { font-weight: 600; }
   .choice .sub { display: block; font-size: 13px; color: var(--muted); font-weight: 400; }
-  .choice.none { border-style: dashed; }
-
-  /* Ranking */
-  ol.rank { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
-  ol.rank li {
-    display: flex; align-items: center; gap: 12px; padding: 10px 12px;
-    border: 1px solid var(--line); border-radius: 8px; background: var(--card);
+  .choice:has(input:checked) { border-color: var(--cta); background: rgba(1,132,137,.06); }
+  .choice .badge {
+    display: none; margin-left: 8px; padding: 1px 8px; border-radius: 10px; vertical-align: 1px;
+    background: var(--navy); color: #fff; font-size: 12px; font-weight: 700;
   }
-  ol.rank .pos { font-weight: 700; width: 92px; flex: none; font-size: 14px; }
-  ol.rank .label { flex: 1; min-width: 0; }
-  ol.rank .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
-  ol.rank .btns { display: flex; gap: 4px; flex: none; }
-  ol.rank button {
-    width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 6px;
-    background: transparent; color: var(--ink); font-size: 12px; cursor: pointer;
-  }
-  ol.rank button:disabled { opacity: .3; cursor: default; }
-  ol.rank.dimmed { opacity: .4; }
-  label.inline { display: flex; gap: 10px; align-items: center; font-size: 15px; cursor: pointer; }
-  label.inline input { width: 18px; height: 18px; accent-color: var(--focus); }
+  .choice.is-primary { cursor: default; }
+  .choice.is-primary .badge { display: inline-block; }
+  .choice:has(input:disabled) { cursor: default; }
 
   /* Fields */
   .field { margin-bottom: 14px; }
@@ -131,7 +129,6 @@
 
   @media (max-width: 520px) {
     .card { padding: 18px 16px; }
-    ol.rank .pos { width: 70px; }
   }
 </style>
 </head>
@@ -144,32 +141,41 @@
 </div>
 <main>
   <header>
-    <h1>Which centre(s) does your expertise belong to?</h1>
-    <p class="lede">Click the part of the diagram that best describes your work. If your work spans more than one centre, click an overlap.</p>
+    <h1>Which Centre(s) does your expertise align with?</h1>
+    <p class="lede">Please select your primary Centre and any other Centres your expertise aligns with. We recognise that many colleagues' expertise spans more than one Centre, but for organisational purposes we ask everyone to choose one primary affiliation. This choice has no direct implications for your PCAD review or line management arrangements.</p>
   </header>
 
   <div id="already" class="notice hidden">You've already responded from this browser. If you submit again, your new response will be added too and the latest one will be used.</div>
 
   <form id="survey" novalidate>
     <section class="card">
-      <h2><span class="step">1</span>Where does your work sit?</h2>
-      <p class="hint">Click a region of the diagram, or tick the boxes below. You can tick more than one.</p>
-      <div class="venn-wrap">
-        <svg class="venn" id="venn" viewBox="40 30 520 500" role="img" aria-label="Venn diagram of the three centres. Use the tick boxes below to make your choice."></svg>
+      <h2><span class="step">1</span>Your primary Centre</h2>
+      <p class="hint">Everyone needs one primary Centre. Choose the Centre that best fits most of your expertise.</p>
+      <div class="choices" id="primaryChoices" role="radiogroup" aria-label="Primary Centre"></div>
+      <div class="note">
+        Unsure about your primary affiliation, or would you like to discuss it? Please contact the relevant Head of Centre:
+        <ul class="heads">
+          <li><strong>WES</strong>: <a href="mailto:chris.white@strath.ac.uk">Chris White</a></li>
+          <li><strong>II</strong>: <a href="mailto:edoardo.patelli@strath.ac.uk">Edoardo Patelli</a></li>
+          <li><strong>GEG</strong>: <a href="mailto:alessandro.tarantino@strath.ac.uk">Alessandro Tarantino</a></li>
+        </ul>
       </div>
-      <div class="readout empty" id="readout" aria-live="polite">Nothing selected yet</div>
-      <div class="choices" id="choices"></div>
     </section>
 
-    <section class="card hidden" id="rankCard">
-      <h2><span class="step">2</span>Which is your main centre?</h2>
-      <p class="hint">Put them in order, with the centre that best fits your work first. Use the arrows to move them.</p>
-      <ol class="rank" id="rankList"></ol>
-      <label class="inline"><input type="checkbox" id="equal"> They're equally important to me, so I'd rather not rank them</label>
+    <section class="card" id="alignCard">
+      <h2><span class="step">2</span>Which other Centres are you aligned with?</h2>
+      <p class="hint">Your primary Centre is always included. Click the part of the diagram that describes your expertise, or tick the boxes below. If you're aligned with your primary Centre only, leave this step as it is.</p>
+      <div class="venn-wrap">
+        <svg class="venn" id="venn" viewBox="40 30 520 500" role="img" aria-label="Venn diagram of the three Centres. Use the tick boxes below to make your choice."></svg>
+        <div class="venn-lock" id="vennLock">Choose your primary Centre first</div>
+      </div>
+      <div class="readout empty" id="readout" aria-live="polite">Choose your primary Centre first</div>
+      <div class="choices" id="choices"></div>
+      <p class="note">If you tick another Centre, you'll be listed on that Centre's web page among colleagues from other Centres who also work in its area.</p>
     </section>
 
     <section class="card">
-      <h2><span class="step" id="aboutStep">2</span>About you</h2>
+      <h2><span class="step">3</span>About you</h2>
       <div class="field">
         <label for="name">Your name <span class="req" aria-hidden="true">*</span></label>
         <input type="text" id="name" autocomplete="name" required aria-required="true">
@@ -182,7 +188,7 @@
       </div>
       <div class="field">
         <label for="comments">Anything else? <span class="opt">(optional)</span></label>
-        <textarea id="comments" placeholder="For example, a research theme that doesn't fit neatly into any centre"></textarea>
+        <textarea id="comments" placeholder="For example, a research theme that doesn't fit neatly into any Centre"></textarea>
       </div>
       <div class="submit-row">
         <button type="submit" class="primary" id="submitBtn">Submit</button>
@@ -220,18 +226,19 @@ const CONFIG = {
 /* ===================================================================== */
 
 const CENTRES = [
-  { key: "wesph", bit: 1, abbr: "WESP", name: "Water, Environment, Sustainability and Public Health",
-    lines: ["Water, Environment,", "Sustainability &", "Public Health"], cx: 228, cy: 215, lx: 140, ly: 150 },
+  { key: "wesph", bit: 1, abbr: "WES", name: "Water, Environment and Sustainability",
+    lines: ["Water, Environment", "& Sustainability"], cx: 228, cy: 215, lx: 140, ly: 158 },
   { key: "ii", bit: 2, abbr: "II", name: "Intelligent Infrastructure",
     lines: ["Intelligent", "Infrastructure"], cx: 372, cy: 215, lx: 460, ly: 160 },
-  { key: "cgeeg", bit: 4, abbr: "GEEG", name: "Centre for Ground Engineering & Energy Geosciences",
-    lines: ["Ground Engineering &", "Energy Geosciences"], cx: 300, cy: 340, lx: 300, ly: 440 }
+  { key: "geg", bit: 4, abbr: "GEG", name: "Geotechnics and Engineering Geosciences",
+    lines: ["Geotechnics &", "Engineering Geosciences"], cx: 300, cy: 340, lx: 300, ly: 440 }
 ];
 const R = 165;
 const SVGNS = "http://www.w3.org/2000/svg";
-const ORDINALS = ["1st (primary)", "2nd", "3rd"];
 
-const state = { selected: new Set(), none: false, order: [], equal: false, hover: 0, submitting: false };
+// primary: one Centre key (required). others: the additional Centres (never includes primary).
+const state = { primary: null, others: new Set(), hover: 0, submitting: false };
+const selectedSet = () => new Set(state.primary ? [state.primary, ...state.others] : []);
 
 const $ = (id) => document.getElementById(id);
 const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -295,24 +302,31 @@ function buildVenn() {
   const hit = (p) => CENTRES.reduce((n, c) => n + (Math.hypot(p.x - c.cx, p.y - c.cy) <= R ? c.bit : 0), 0);
 
   svg.addEventListener("pointermove", (e) => {
-    const h = hit(toSvg(e));
+    const h = state.primary ? hit(toSvg(e)) : 0;
     if (h !== state.hover) { state.hover = h; paintVenn(); }
   });
   svg.addEventListener("pointerleave", () => { state.hover = 0; paintVenn(); });
   svg.addEventListener("click", (e) => {
+    if (!state.primary) return;
     const code = hit(toSvg(e));
     if (!code) return;
-    const current = codeOf(state.selected);
-    state.selected = new Set(code === current ? [] : centresOf(code).map((c) => c.key));
-    state.none = false;
-    syncOrder(); render();
+    // The primary Centre is always part of the selection. Clicking the region that is
+    // already selected resets to "primary only".
+    const target = new Set([state.primary, ...centresOf(code).map((c) => c.key)]);
+    const same = codeOf(target) === codeOf(selectedSet());
+    target.delete(state.primary);
+    state.others = same ? new Set() : target;
+    render();
   });
 }
 
 function paintVenn() {
-  const sel = codeOf(state.selected);
+  const sel = state.primary ? codeOf(selectedSet()) : 0;
   document.querySelectorAll("svg.venn .base").forEach((n) => n.setAttribute("fill", colorOf(CENTRES.find((c) => c.key === n.dataset.key))));
-  document.querySelectorAll("svg.venn .outline").forEach((n) => n.setAttribute("stroke", colorOf(CENTRES.find((c) => c.key === n.dataset.key))));
+  document.querySelectorAll("svg.venn .outline").forEach((n) => {
+    n.setAttribute("stroke", colorOf(CENTRES.find((c) => c.key === n.dataset.key)));
+    n.style.strokeWidth = n.dataset.key === state.primary ? 6 : 3; // style, so it beats the CSS rule
+  });
   for (let code = 1; code <= 7; code++) {
     const r = regionEls[code];
     // Brand rule: no blended colours, so the selection uses the web call-to-action colour
@@ -321,110 +335,89 @@ function paintVenn() {
   }
 }
 
-/* ---------- Checkboxes ---------- */
+/* ---------- Step 1: primary Centre (radio buttons) ---------- */
+function buildPrimary() {
+  const box = $("primaryChoices");
+  CENTRES.forEach((c) => {
+    const lab = document.createElement("label");
+    lab.className = "choice";
+    lab.innerHTML = `<input type="radio" name="primary" value="${c.key}" required><span class="dot" style="background:var(--${c.key})"></span>
+      <span class="name">${c.abbr}<span class="sub">${c.name}</span></span>`;
+    lab.querySelector("input").addEventListener("change", () => {
+      state.primary = c.key;
+      state.others.delete(c.key);
+      render();
+    });
+    box.appendChild(lab);
+  });
+}
+
+/* ---------- Step 2: other Centres (tick boxes, in sync with the Venn) ---------- */
 function buildChoices() {
   const box = $("choices");
   CENTRES.forEach((c) => {
     const lab = document.createElement("label");
     lab.className = "choice";
     lab.innerHTML = `<input type="checkbox" value="${c.key}"><span class="dot" style="background:var(--${c.key})"></span>
-      <span class="name">${c.abbr}<span class="sub">${c.name}</span></span>`;
+      <span class="name">${c.abbr}<span class="badge">Primary</span><span class="sub">${c.name}</span></span>`;
     lab.querySelector("input").addEventListener("change", (e) => {
-      e.target.checked ? state.selected.add(c.key) : state.selected.delete(c.key);
-      if (e.target.checked) state.none = false;
-      syncOrder(); render();
+      e.target.checked ? state.others.add(c.key) : state.others.delete(c.key);
+      render();
     });
     box.appendChild(lab);
   });
-  const none = document.createElement("label");
-  none.className = "choice none";
-  none.innerHTML = `<input type="checkbox" id="noneBox"><span class="name">None of these, or I'm not sure<span class="sub">Tell us more in the comments box below</span></span>`;
-  none.querySelector("input").addEventListener("change", (e) => {
-    state.none = e.target.checked;
-    if (state.none) state.selected.clear();
-    syncOrder(); render();
-  });
-  box.appendChild(none);
-}
-
-/* ---------- Ranking ---------- */
-function syncOrder() {
-  state.order = state.order.filter((k) => state.selected.has(k));
-  CENTRES.forEach((c) => { if (state.selected.has(c.key) && !state.order.includes(c.key)) state.order.push(c.key); });
-}
-
-function renderRank() {
-  const multi = state.selected.size >= 2;
-  $("rankCard").classList.toggle("hidden", !multi);
-  $("aboutStep").textContent = multi ? "3" : "2";
-  const list = $("rankList");
-  list.classList.toggle("dimmed", state.equal);
-  list.innerHTML = "";
-  if (!multi) return;
-  state.order.forEach((key, i) => {
-    const c = CENTRES.find((x) => x.key === key);
-    const li = document.createElement("li");
-    li.innerHTML = `<span class="pos">${state.equal ? "Equal" : ORDINALS[i]}</span>
-      <span class="dot" style="background:var(--${c.key})"></span>
-      <span class="label"><strong>${c.abbr}</strong>: ${c.name}</span>
-      <span class="btns">
-        <button type="button" aria-label="Move ${c.abbr} up" ${i === 0 || state.equal ? "disabled" : ""}>&#9650;&#xFE0E;</button>
-        <button type="button" aria-label="Move ${c.abbr} down" ${i === state.order.length - 1 || state.equal ? "disabled" : ""}>&#9660;&#xFE0E;</button>
-      </span>`;
-    const [up, down] = li.querySelectorAll("button");
-    up.addEventListener("click", () => move(i, -1, up));
-    down.addEventListener("click", () => move(i, 1, down));
-    list.appendChild(li);
-  });
-}
-function move(i, dir) {
-  const j = i + dir;
-  [state.order[i], state.order[j]] = [state.order[j], state.order[i]];
-  renderRank();
-  // keep keyboard focus on the moved item
-  const btns = $("rankList").children[j].querySelectorAll("button");
-  const target = dir < 0 ? btns[0] : btns[1];
-  (target.disabled ? btns[dir < 0 ? 1 : 0] : target).focus();
 }
 
 /* ---------- Render ---------- */
+const abbrOf = (k) => CENTRES.find((c) => c.key === k).abbr;
+const nameOf = (k) => (k ? CENTRES.find((c) => c.key === k).name : "");
+const othersOrdered = () => CENTRES.filter((c) => state.others.has(c.key)).map((c) => c.key);
+
 function combinationLabel() {
-  if (state.none) return "None of these / not sure";
-  if (!state.selected.size) return "";
-  const cs = CENTRES.filter((c) => state.selected.has(c.key)).map((c) => c.abbr);
+  if (!state.primary) return "";
+  const cs = CENTRES.filter((c) => selectedSet().has(c.key)).map((c) => c.abbr);
   return cs.length === 1 ? cs[0] + " only" : cs.join(" + ");
 }
 function render() {
-  document.querySelectorAll('#choices input[value]').forEach((i) => { i.checked = state.selected.has(i.value); });
-  $("noneBox").checked = state.none;
-  const lbl = combinationLabel();
+  const locked = !state.primary;
+  $("alignCard").classList.toggle("locked", locked);
+  $("vennLock").classList.toggle("hidden", !locked);
+  document.querySelectorAll("#primaryChoices input").forEach((i) => { i.checked = i.value === state.primary; });
+  document.querySelectorAll("#choices input").forEach((i) => {
+    const isPrimary = i.value === state.primary;
+    i.checked = isPrimary || state.others.has(i.value);
+    i.disabled = locked || isPrimary;
+    i.closest(".choice").classList.toggle("is-primary", isPrimary);
+  });
   const ro = $("readout");
-  ro.textContent = lbl ? "You selected: " + lbl : "Nothing selected yet";
-  ro.classList.toggle("empty", !lbl);
+  if (locked) ro.textContent = "Choose your primary Centre first";
+  else {
+    const o = othersOrdered().map(abbrOf);
+    ro.textContent = `Primary: ${abbrOf(state.primary)}` + (o.length ? `  ·  Also aligned with: ${o.join(" and ")}` : "  ·  No other Centres");
+  }
+  ro.classList.toggle("empty", locked);
   paintVenn();
-  renderRank();
 }
-
-$("equal").addEventListener("change", (e) => { state.equal = e.target.checked; renderRank(); });
 
 /* ---------- Submit ---------- */
 function payload() {
-  const multi = state.selected.size >= 2;
-  const ranked = multi && !state.equal ? state.order : state.selected.size === 1 ? [...state.selected] : [];
-  const nameOf = (k) => (k ? CENTRES.find((c) => c.key === k).name : "");
+  const sel = selectedSet();
+  const others = othersOrdered();
+  // Field names match the Power Automate flow and the spreadsheet columns.
+  // Secondary/Tertiary now hold the other aligned Centres (unranked).
   return {
     submittedAtClient: new Date().toISOString(),
     name: $("name").value.trim(),
     email: $("email").value.trim().toLowerCase(),
     combination: combinationLabel(),
-    inWESPH: state.selected.has("wesph") ? "Yes" : "No",
-    inII: state.selected.has("ii") ? "Yes" : "No",
-    inCGEEG: state.selected.has("cgeeg") ? "Yes" : "No",
-    primary: nameOf(ranked[0]),
-    secondary: nameOf(ranked[1]),
-    tertiary: nameOf(ranked[2]),
-    equalWeighting: multi && state.equal ? "Yes" : "No",
-    noneOfThese: state.none ? "Yes" : "No",
+    inWESPH: sel.has("wesph") ? "Yes" : "No",
+    inII: sel.has("ii") ? "Yes" : "No",
+    inCGEEG: sel.has("geg") ? "Yes" : "No",
+    primary: nameOf(state.primary),
+    secondary: nameOf(others[0]),
+    tertiary: nameOf(others[1]),
+    equalWeighting: "No",
+    noneOfThese: "No",
     comments: $("comments").value.trim()
   };
 }
@@ -434,10 +427,10 @@ function showThanks(p, demo) {
   $("already").classList.add("hidden");
   $("thanks").classList.remove("hidden");
   $("demoNote").textContent = demo ? "Demo mode: nothing was saved because no FLOW_URL is set in the page's CONFIG." : "";
-  const rows = [["Selection", p.combination], ["Primary", p.primary], ["Secondary", p.secondary], ["Third", p.tertiary]];
-  if (p.equalWeighting === "Yes") rows.push(["Ranking", "Equal weighting"]);
-  $("summary").innerHTML = rows.filter((r) => r[1]).map((r) => `<dt>${r[0]}</dt><dd></dd>`).join("");
-  $("summary").querySelectorAll("dd").forEach((dd, i) => { dd.textContent = rows.filter((r) => r[1])[i][1]; });
+  const also = [p.secondary, p.tertiary].filter(Boolean).join("; ") || "None";
+  const rows = [["Primary Centre", p.primary], ["Also aligned with", also]];
+  $("summary").innerHTML = rows.map((r) => `<dt>${r[0]}</dt><dd></dd>`).join("");
+  $("summary").querySelectorAll("dd").forEach((dd, i) => { dd.textContent = rows[i][1]; });
   try { localStorage.setItem("cee-centres-responded", "1"); } catch (_) {}
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -447,7 +440,7 @@ $("survey").addEventListener("submit", async (e) => {
   if (state.submitting) return;
   const msg = $("msg");
   msg.className = "msg err";
-  if (!state.selected.size && !state.none) { msg.textContent = "Please choose at least one centre, or tick 'None of these'."; return; }
+  if (!state.primary) { msg.textContent = "Please choose your primary Centre (step 1)."; document.querySelector("#primaryChoices input").focus(); return; }
   if (!$("name").value.trim()) { msg.textContent = "Please enter your name."; $("name").focus(); return; }
   if (!checkEmail(true)) { msg.textContent = "Please enter your Strathclyde email address."; $("email").focus(); return; }
   msg.className = "msg"; msg.textContent = "Sending…";
@@ -483,6 +476,7 @@ $("survey").addEventListener("submit", async (e) => {
 
 /* ---------- Init ---------- */
 buildVenn();
+buildPrimary();
 buildChoices();
 // Strathclyde addresses: @strath.ac.uk, or a subdomain such as @uni.strath.ac.uk
 const STRATH_EMAIL = /^[^\s@]+@([a-z0-9-]+\.)*strath\.ac\.uk$/i;
@@ -498,10 +492,9 @@ function checkEmail(showEmpty) {
 $("email").addEventListener("blur", () => checkEmail(false));
 $("email").addEventListener("input", () => { if ($("email").getAttribute("aria-invalid") === "true") checkEmail(false); });
 
-// Pre-select from a link, e.g. survey.html?c=wesph,ii
-const pre = new URLSearchParams(location.search).get("c");
-if (pre) pre.split(",").map((s) => s.trim().toLowerCase()).forEach((k) => { if (CENTRES.some((c) => c.key === k)) state.selected.add(k); });
-syncOrder();
+// Optional: pre-select a primary Centre from a link, e.g. survey.html?p=wesph (keys: wesph, ii, geg)
+const pre = (new URLSearchParams(location.search).get("p") || "").trim().toLowerCase();
+if (CENTRES.some((c) => c.key === pre)) state.primary = pre;
 render();
 try { if (localStorage.getItem("cee-centres-responded")) $("already").classList.remove("hidden"); } catch (_) {}
 </script>
