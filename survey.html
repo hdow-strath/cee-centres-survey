@@ -322,6 +322,8 @@ function buildVenn() {
 
 function paintVenn() {
   const sel = state.primary ? codeOf(selectedSet()) : 0;
+  // When other Centres are added, keep the primary-only region lightly tinted
+  const primarySolo = state.primary && state.others.size ? CENTRES.find((c) => c.key === state.primary).bit : 0;
   document.querySelectorAll("svg.venn .base").forEach((n) => n.setAttribute("fill", colorOf(CENTRES.find((c) => c.key === n.dataset.key))));
   document.querySelectorAll("svg.venn .outline").forEach((n) => {
     n.setAttribute("stroke", colorOf(CENTRES.find((c) => c.key === n.dataset.key)));
@@ -331,7 +333,9 @@ function paintVenn() {
     const r = regionEls[code];
     // Brand rule: no blended colours, so the selection uses the web call-to-action colour
     r.setAttribute("fill", cssVar("--cta"));
-    r.setAttribute("fill-opacity", code === sel ? 0.5 : code === state.hover ? 0.18 : 0);
+    const light = code === primarySolo ? 0.2 : 0;
+    const hover = code === state.hover ? 0.18 : 0;
+    r.setAttribute("fill-opacity", code === sel ? 0.5 : Math.max(light, hover));
   }
 }
 
